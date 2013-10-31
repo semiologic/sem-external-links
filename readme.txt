@@ -20,6 +20,7 @@ Under Settings / External Links, you can configure the plugin to:
 - Add an external link icon to outgoing links. You can use a class="no_icon" attribute on links to override this.
 - Open outgoing links in new windows. Note that this can damage your visitor's trust towards your site in that they can think your site used a pop-under.
 - Add rel=nofollow to the links. You can use a rel="nofollow" attribute on links to override this.
+- Add rel=nofollow to the links. You can use a rel="follow" attribute on links to override this.
 
 = Help Me! =
 
