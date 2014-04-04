@@ -36,6 +36,10 @@ If you require more dedicated assistance, consider using [Semiologic Pro](http:/
 
 == Change Log ==
 
+= 5.3 =
+
+- Code refactoring
+
 = 5.2.1 =
 
 - Checks for new sem_dofollow class to determine if Do Follow plugin is active

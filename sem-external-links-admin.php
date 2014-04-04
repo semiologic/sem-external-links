@@ -6,12 +6,66 @@
  **/
 
 class external_links_admin {
-    /**
-     * external_links_admin()
-     */
+	/**
+	 * Plugin instance.
+	 *
+	 * @see get_instance()
+	 * @type object
+	 */
+	protected static $instance = NULL;
+
+	/**
+	 * URL to this plugin's directory.
+	 *
+	 * @type string
+	 */
+	public $plugin_url = '';
+
+	/**
+	 * Path to this plugin's directory.
+	 *
+	 * @type string
+	 */
+	public $plugin_path = '';
+
+	/**
+	 * Access this plugin’s working instance
+	 *
+	 * @wp-hook plugins_loaded
+	 * @return  object of this class
+	 */
+	public static function get_instance()
+	{
+		NULL === self::$instance and self::$instance = new self;
+
+		return self::$instance;
+	}
+
+
+	/**
+	 * Constructor.
+	 *
+	 *
+	 */
+
 	public function __construct() {
-        add_action('settings_page_external-links', array($this, 'save_options'), 0);
+		$this->plugin_url    = plugins_url( '/', __FILE__ );
+		$this->plugin_path   = plugin_dir_path( __FILE__ );
+
+		$this->init();
     }
+
+
+	/**
+	 * init()
+	 *
+	 * @return void
+	 **/
+
+	function init() {
+		// register actions and filters
+		add_action('settings_page_external-links', array($this, 'save_options'), 0);
+	}
 
     /**
 	 * save_options()
@@ -160,4 +214,4 @@ class external_links_admin {
 	} # edit_options()
 } # external_links_admin
 
-$external_links_admin = new external_links_admin();
+$external_links_admin = external_links_admin::get_instance();
