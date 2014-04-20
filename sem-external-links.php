@@ -3,7 +3,7 @@
 Plugin Name: External Links
 Plugin URI: http://www.semiologic.com/software/external-links/
 Description: Marks outbound links as such, with various effects that are configurable under <a href="options-general.php?page=external-links">Settings / External Links</a>.
-Version: 5.3 dev
+Version: 5.3
 Author: Denis de Bernardy & Mike Koepke
 Author URI: http://www.getsemiologic.com
 Text Domain: external-links
@@ -172,7 +172,13 @@ class external_links {
 		# no icons for images
 		$is_image = (bool) preg_match("/^\s*<\s*img\s.+?>\s*$/is", $anchor['body']);
 
+		$current_filter = $anchor['current_filter'];
+
 		$o = external_links::get_options();
+
+		# is this is a widget callback and the option is off return;
+		if ( 'widget_text' == $current_filter && (isset( $o['text_widgets'] ) && !$o['text_widgets']) )
+			return $anchor;
 
 		if ( !in_array('external', $anchor['attr']['class']) )
 			$anchor['attr']['class'][] = 'external';
