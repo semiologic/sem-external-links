@@ -3,7 +3,7 @@
 Plugin Name: External Links
 Plugin URI: http://www.semiologic.com/software/external-links/
 Description: Marks outbound links as such, with various effects that are configurable under <a href="options-general.php?page=external-links">Settings / External Links</a>.
-Version: 5.3
+Version: 5.3.1
 Author: Denis de Bernardy & Mike Koepke
 Author URI: http://www.getsemiologic.com
 Text Domain: external-links
@@ -81,7 +81,7 @@ class external_links {
 		load_plugin_textdomain(
 			$domain,
 			FALSE,
-			$this->plugin_path . 'lang'
+			dirname(plugin_basename(__FILE__)) . '/lang'
 		);
 	}
 
