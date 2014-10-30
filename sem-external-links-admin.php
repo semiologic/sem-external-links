@@ -77,7 +77,7 @@ class external_links_admin {
 		if ( !$_POST || !current_user_can('manage_options') )
 			return;
 		
-		check_admin_referer('external_links');
+		check_admin_referer('sem_external_links');
 		
 		foreach ( array('global', 'icon', 'target', 'nofollow', 'text_widgets') as $var )
 			$$var = isset($_POST[$var]);
@@ -104,9 +104,9 @@ class external_links_admin {
 		echo '<div class="wrap">' . "\n"
 			. '<form method="post" action="">';
 
-		wp_nonce_field('external_links');
+		wp_nonce_field('sem_external_links');
 		
-		$options = external_links::get_options();
+		$options = sem_external_links::get_options();
 		
 		if ( $options['nofollow'] && ( function_exists('strip_nofollow') || class_exists('sem_dofollow') ) ) {
 			echo "<div class=\"error\">\n"
