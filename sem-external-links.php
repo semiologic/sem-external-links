@@ -19,6 +19,8 @@ This software is copyright Denis de Bernardy & Mike Koepke, and is distributed u
 
 **/
 
+define('sem_external_links_version', '6.0');
+
 /**
  * external_links
  *
@@ -117,6 +119,16 @@ class sem_external_links {
 			if ( $this->opts['icon'] )
 				add_action('wp_enqueue_scripts', array($this, 'styles'), 5);
 
+			if ( $this->opts['follow_comments'] ) {
+				if ( !class_exists('sem_follow_comment') )
+				    include $this->plugin_path . '/sem-follow_comment.php';
+			}
+
+			if ( $this->opts['autolinks'] ) {
+				if ( !class_exists('sem_autolink_uri') )
+				    include $this->plugin_path . '/sem-autolink-uri.php';
+			}
+
 			if ( $this->opts['global'] ) {
 				if ( !class_exists('external_links_anchor_utils') )
 				    include $this->plugin_path . '/external-links-anchor-utils.php';
@@ -166,19 +178,15 @@ class sem_external_links {
 	 **/
 
 	function process_content($text) {
+
+		// short circuit if there's no anchors at all in the text
+		if ( false === stripos($text, '<a ') )
+			return($text);
+
 		global $escape_anchor_filter;
 		$escape_anchor_filter = array();
 
 		$text = $this->escape($text);
-
-/*		$text = preg_replace_callback("/
-			<\s*a\s+
-			([^<>]+)
-			>
-			(.*?)
-			<\s*\/\s*a\s*>
-			/isx", array($this, 'ob_filter_callback'), $text);
-*/
 
 		// find all occurrences of anchors and fill matches with links
 		preg_match_all("/
@@ -251,7 +259,7 @@ class sem_external_links {
 	function escape_callback($match) {
 		global $escape_anchor_filter;
 
-		$tag_id = "----escape_external_links_anchor_utils:" . md5($match[0]) . "----";
+		$tag_id = "----escape_sem_external_links:" . md5($match[0]) . "----";
 		$escape_anchor_filter[$tag_id] = $match[0];
 
 		return $tag_id;
@@ -369,6 +377,40 @@ class sem_external_links {
 		return $link;
 	} # build_anchor()
 
+	/**
+	 * Parse an attributes string into an array. If the string starts with a tag,
+	 * then the attributes on the first tag are parsed. This parses via a manual
+	 * loop and is designed to be safer than using DOMDocument.
+	 *
+	 * @param    string|*   $attrs
+	 * @return   array
+	 *
+	 * @example  parse_attrs( 'src="example.jpg" alt="example"' )
+	 * @example  parse_attrs( '<img src="example.jpg" alt="example">' )
+	 * @example  parse_attrs( '<a href="example"></a>' )
+	 * @example  parse_attrs( '<a href="example">' )
+	 */
+	function parseAttributes($text) {
+	    $attributes = array();
+	    $pattern = '#(?(DEFINE)
+	            (?<name>[a-zA-Z][a-zA-Z0-9-:]*)
+	            (?<value_double>"[^"]+")
+	            (?<value_single>\'[^\']+\')
+	            (?<value_none>[^\s>]+)
+	            (?<value>((?&value_double)|(?&value_single)|(?&value_none)))
+	        )
+	        (?<n>(?&name))(=(?<v>(?&value)))?#xs';
+
+	    if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
+	        foreach ($matches as $match) {
+	            $attributes[$match['n']] = isset($match['v'])
+	                ? trim($match['v'], '\'"')
+	                : null;
+	        }
+	    }
+
+	    return $attributes;
+	}
 
 	/**
 	 * Updates attribute of an HTML tag.
@@ -437,7 +479,9 @@ class sem_external_links {
 			$updated = true;
 		}
 
-		if ( $this->opts['nofollow'] && !function_exists('strip_nofollow')
+		if ( $this->opts['nofollow'] && ( current_filter() == 'comment_text')
+			&& !function_exists('strip_nofollow')
+			&& !class_exists('sem_dofollow') && !class_exists('sem_follow_comment')
 			&& !in_array('nofollow', $anchor['attr']['rel'])
 			&& !in_array('follow', $anchor['attr']['rel']) ) {
 			$anchor['attr']['rel'][] = 'nofollow';
@@ -476,7 +520,7 @@ class sem_external_links {
 		static $site_domain;
 		
 		if ( !isset($site_domain) ) {
-			$site_domain = get_option('home');
+			$site_domain = home_url();
 			$site_domain = parse_url($site_domain);
 			$site_domain = $site_domain['host'];
             if ($site_domain == false)
@@ -530,61 +574,66 @@ class sem_external_links {
             else
                 return false;
         }
-		$link_domain = preg_replace("/^www\./i", '', $link_domain);
+
 		$link_domain = strtolower($link_domain);
+		$link_domain = str_replace('www.', '', $link_domain);
+		if ( $this->opts['subdomains_local'] ) {
+			$subdomains = $this->extract_subdomains($link_domain);
+			if ( $subdomains != '')
+				$link_domain = str_replace($subdomains . '.', '', $link_domain);
+		}
 		
 		if ( $site_domain == $link_domain ) {
 			return true;
 		} elseif ( function_exists('is_multisite') && is_multisite() ) {
 			return false;
 		} else {
+			return false;
 			$site_elts = explode('.', $site_domain);
 			$link_elts = explode('.', $link_domain);
-			
+
 			while ( ( $site_elt = array_pop($site_elts) ) && ( $link_elt = array_pop($link_elts) ) ) {
 				if ( $site_elt !== $link_elt )
 					return false;
 			}
-			
+
 			return empty($link_elts) || empty($site_elts);
+
 		}
 	} # is_local_url()
 	
+	/**
+	 * extract_domain()
+	 *
+	 * @param string $domain
+	 * @return string
+	 **/
+	function extract_domain($domain)
+	{
+	    if(preg_match("/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i", $domain, $matches))
+	    {
+	        return $matches['domain'];
+	    } else {
+	        return $domain;
+	    }
+	} # extract_domain()
 
 	/**
-	 * Parse an attributes string into an array. If the string starts with a tag,
-	 * then the attributes on the first tag are parsed. This parses via a manual
-	 * loop and is designed to be safer than using DOMDocument.
+	 * extract_subdomains()
 	 *
-	 * @param    string|*   $attrs
-	 * @return   array
-	 *
-	 * @example  parse_attrs( 'src="example.jpg" alt="example"' )
-	 * @example  parse_attrs( '<img src="example.jpg" alt="example">' )
-	 * @example  parse_attrs( '<a href="example"></a>' )
-	 * @example  parse_attrs( '<a href="example">' )
-	 */
-	function parseAttributes($text) {
-	    $attributes = array();
-	    $pattern = '#(?(DEFINE)
-	            (?<name>[a-zA-Z][a-zA-Z0-9-:]*)
-	            (?<value_double>"[^"]+")
-	            (?<value_single>\'[^\']+\')
-	            (?<value_none>[^\s>]+)
-	            (?<value>((?&value_double)|(?&value_single)|(?&value_none)))
-	        )
-	        (?<n>(?&name))(=(?<v>(?&value)))?#xs';
+	 * @param string $domain
+	 * @return string
+	 **/
+	function extract_subdomains($domain)
+	{
+	    $subdomains = $domain;
+	    $domain = $this->extract_domain($subdomains);
 
-	    if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
-	        foreach ($matches as $match) {
-	            $attributes[$match['n']] = isset($match['v'])
-	                ? trim($match['v'], '\'"')
-	                : null;
-	        }
-	    }
+	    $subdomains = rtrim(strstr($subdomains, $domain, true), '.');
 
-	    return $attributes;
-	}
+	    return $subdomains;
+	} # extract_subdomains()
+
 
 	/**
 	 * get_options
@@ -599,8 +648,8 @@ class sem_external_links {
 			return $o;
 		
 		$o = get_option('external_links');
-		
-		if ( $o === false || !isset($o['text_widgets']) )
+
+		if ( $o === false || !isset($o['text_widgets']) || !isset($o['autolinks']) || !isset($o['version']) )
 			$o = sem_external_links::init_options();
 
 		return $o;
@@ -613,27 +662,70 @@ class sem_external_links {
 	 * @return array $options
 	 **/
 
-	function init_options() {
+	static function init_options() {
 		$o = get_option('external_links');
 
 		$defaults = array(
 					'global' => false,
-					'icon' => true,
+					'icon' => false,
 					'target' => false,
 					'nofollow' => true,
 					'text_widgets' => true,
+					'autolinks' => false,
+					'follow_comments' => false,
+					'subdomains_local' => true,
+					'version' => sem_external_links_version,
 					);
 
 		if ( !$o )
-			$o  = $defaults;
+			$updated_opts  = $defaults;
 		else
-			$o = wp_parse_args($o, $defaults);
+			$updated_opts = wp_parse_args($o, $defaults);
 
-		update_option('external_links', $o);
+		if ( !isset( $o['version'] )) {
+			if ( sem_external_links::replace_plugin('sem-dofollow/sem-dofollow.php') )
+				$updated_opts['follow_comments'] = true;
 
-		return $o;
+			if ( sem_external_links::replace_plugin('sem-autolink-uri/sem-autolink-uri.php') )
+				$updated_opts['autolinks'] = true;
+		}
+
+		update_option('external_links', $updated_opts);
+
+		return $updated_opts;
 	} # init_options()
 
+	/**
+	 * replace_plugin()
+	 *
+	 * @param $plugin_name
+	 * @return bool
+	 */
+	static function replace_plugin( $plugin_name ) {
+		$active_plugins = get_option('active_plugins');
+
+		if ( !is_array($active_plugins) )
+		{
+			$active_plugins = array();
+		}
+
+		$was_active = false;
+		foreach ( (array) $active_plugins as $key => $plugin )
+		{
+			if ( $plugin == $plugin_name )
+			{
+				$was_active = true;
+				unset($active_plugins[$key]);
+				break;
+			}
+		}
+
+		sort($active_plugins);
+
+		update_option('active_plugins', $active_plugins);
+
+		return $was_active;
+	}
 	/**
 	 * admin_menu()
 	 *
@@ -649,6 +741,8 @@ class sem_external_links {
 			array('external_links_admin', 'edit_options')
 			);
 	} # admin_menu()
+
+
 } # external_links
 
 $sem_external_links = sem_external_links::get_instance();
