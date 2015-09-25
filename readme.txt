@@ -59,6 +59,12 @@ The plugin supports a non-started rel="follow" attribute on links to override th
 
 == Change Log ==
 
+= 6.6 =
+
+- New option to exclude html code blocks (pre and code) from link processing
+- Updated the text-domain to sem-external-links to match plugin's slug to support internationalization efforts
+
+
 = 6.5.1 =
 
 - No functionality changes in this release.
