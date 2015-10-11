@@ -90,6 +90,7 @@ class external_links_admin {
 		global $sem_external_links;
 		foreach( $domains as $num => $domain ) {
 			$domain = trim($domain);
+			$domain = untrailingslashit($domain);
 			$domain = str_replace('http://', '', $domain);
 			$domain = str_replace('https://', '', $domain);
 			if (  $sem_external_links->is_valid_domain_name($domain)) {

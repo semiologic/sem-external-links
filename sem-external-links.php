@@ -3,7 +3,7 @@
 Plugin Name: External Links
 Plugin URI: http://www.semiologic.com/software/external-links/
 Description: Marks outbound links as such, with various effects that are configurable under <a href="options-general.php?page=external-links">Settings / External Links</a>.
-Version: 6.6
+Version: 6.7
 Author: Denis de Bernardy & Mike Koepke
 Author URI: https://www.semiologic.com
 Text Domain: sem-external-links
@@ -383,7 +383,7 @@ class sem_external_links {
 		$anchor['attr'] = $this->parseAttributes( $match[1] );
 
 		if ( !is_array($anchor['attr']) || empty($anchor['attr']['href']) # parser error or no link
-			|| trim($anchor['attr']['href']) != esc_url($anchor['attr']['href'], null, 'db') ) # likely a script
+		|| trim($anchor['attr']['href']) != esc_attr($anchor['attr']['href'], null, 'db') ) # likely a script
 			return false;
 
 		foreach ( array('class', 'rel') as $attr ) {
