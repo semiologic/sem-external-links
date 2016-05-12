@@ -724,7 +724,9 @@ class sem_external_links {
 	    $subdomains = $domain;
 	    $domain = $this->extract_domain($subdomains);
 
-		$subdomains = rtrim( substr($subdomains, 0, strpos($subdomains, $domain)) );
+	    if(!empty($domain)){
+	        $subdomains = rtrim( substr($subdomains, 0, strpos($subdomains, $domain)) );
+	    }
 
 	    return $subdomains;
 	} # extract_subdomains()
