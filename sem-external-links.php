@@ -449,7 +449,7 @@ class sem_external_links {
 		$attr_value     = false;
 		$quote          = false; // quotes to wrap attribute values
 
-		preg_match('/(<a.*>)/iU', $html, $match);
+		preg_match('/(<a.*>)/isU', $html, $match);
 
 		$link_str = $match[1];
 		if ($link_str == "")
