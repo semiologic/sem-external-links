@@ -3,7 +3,7 @@ Contributors: Denis-de-Bernardy, Mike_Koepke
 Donate link: https://www.semiologic.com/donate/
 Tags: external-links, nofollow, link-target, link-icon, semiologic
 Requires at least: 2.8
-Tested up to: 4.3
+Tested up to: 4.7.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,15 @@ The plugin supports a non-started rel="follow" attribute on links to override th
 
 
 == Change Log ==
+
+= 6.8 =
+
+- Change: Handle links that space multiple lines (props archon810)
+- Fix: Add url found in a tag with a data- attribute prefix to the Auto convert Text Urls exclusion list (Fixes problem with addtoany)
+- Fix: Do not convert text urls found in schema.org meta and div tags
+- Fix: Do not convert text urls found in svg xlmns attributes
+- Fix: Remove strpos(): Empty needle PHP warning in sem-external-links.php (props archon810)
+- Under Hood: Tested with PHP 7.x
 
 = 6.7 =
 

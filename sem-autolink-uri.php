@@ -132,7 +132,7 @@ class sem_autolink_uri {
             )
             (?![\"']))
 			/ix", array($this, 'url_callback'), $text);
-		
+
 		$text = sem_autolink_uri::unescape($text);
 		
 		return $text;
@@ -184,11 +184,14 @@ class sem_autolink_uri {
 			'smart_links' => "/
 				\[.+?\]
 				/x",
+			'meta' => "/
+				<meta .*?>
+				/isx",
 			'anchors' => "/
 				<a .*?>.*?<\/a>
 				/isx",
 			'tags' => "/
-				<[^<>]+?(?:src|href|codebase|archive|usemap|data|value|action|background|placeholder|onclick)=[^<>]+?>
+				<[^<>]+?(?:src|href|codebase|archive|usemap|data|data-.*|itemtype|xmlns|value|action|background|placeholder|onclick)=[^<>]+?>
 				/ix",
 			) as $regex ) {
 			$t = preg_replace_callback($regex, array($this, 'escape_callback'), $text);
