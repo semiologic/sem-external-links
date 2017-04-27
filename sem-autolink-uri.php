@@ -191,7 +191,7 @@ class sem_autolink_uri {
 				<a .*?>.*?<\/a>
 				/isx",
 			'tags' => "/
-				<[^<>]+?(?:src|href|codebase|archive|usemap|data|data-.*|itemtype|xmlns|value|action|background|placeholder|onclick)=[^<>]+?>
+				<[^<>]+?(?:src|href|codebase|archive|usemap|data|data-.*|itemtype|xmlns|value|action|cite|background|placeholder|onclick)=[^<>]+?>
 				/ix",
 			) as $regex ) {
 			$t = preg_replace_callback($regex, array($this, 'escape_callback'), $text);

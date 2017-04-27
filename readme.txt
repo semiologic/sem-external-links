@@ -3,7 +3,7 @@ Contributors: Denis-de-Bernardy, Mike_Koepke
 Donate link: https://www.semiologic.com/donate/
 Tags: external-links, nofollow, link-target, link-icon, semiologic
 Requires at least: 2.8
-Tested up to: 4.7.3
+Tested up to: 4.7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,6 +58,10 @@ The plugin supports a non-started rel="follow" attribute on links to override th
 
 
 == Change Log ==
+
+= 6.8.1 =
+
+- Fix: Embedded Facebook urls no longer processed by Auto Convert text functionality
 
 = 6.8 =
 
