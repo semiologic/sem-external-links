@@ -83,7 +83,7 @@ class external_links_admin {
 			          'subdomains_local', 'exclude_code_blocks') as $var )
 			$$var = isset($_POST[$var]);
 
-		$exclude_domains = stripslashes($_POST['exclude_domains']);
+		$exclude_domains = isset( $_POST['exclude_domains'] ) ? stripslashes($_POST['exclude_domains']) : '';
 		$domains = preg_split("/[\s,]+/", $exclude_domains);
 		$exclude_domains = array();
 
